@@ -1,0 +1,57 @@
+@top Program { "{" statement ((';' | '\n') statement)* "}" | statement ((';' | '\n') statement)*  }
+
+@skip { LineComment space }
+
+statement {
+  GenericCommand |
+  label
+}
+
+GenericCommand {
+  Address? (
+    NoArgCommand |
+    sCommandStatement |
+    yCommandStatement | 
+    branchCommandStatement |
+    AICCommand |
+    InvalidCommand+
+  )
+}
+
+Address { Regex "!"? }
+
+sCommandStatement { SCommand Regex replacementText SingleSlash SFlag* }
+yCommandStatement { YCommand SingleSlash replacementText SingleSlash replacementText SingleSlash }
+branchCommandStatement { BranchCommand LabelIdentifier? }
+
+label { ":" LabelIdentifier }
+
+replacementText { notSlash* }
+
+SingleSlash { '/' }
+
+@tokens {
+
+  space { $[ \t] }
+
+  NoArgCommand { $[dDgGhHlnNpPqQx=] }
+  SCommand { "s" }
+  YCommand { "y" }
+  BranchCommand { $[tTb] }
+
+  Regex { '/' (![/\\\n] | "\\" _)* '/' }
+  SFlag { $[IigMmp] | std.digit }
+
+  notSlash { ![/] }
+
+  LineComment { "#" ![\n]* "\n"? }
+
+  LabelIdentifier { (std.asciiLetter | std.digit)+ }
+
+  InvalidCommand { ![dDgGhHlnNpPqQx=aictTbsy:#;\n/{}!] }
+
+  AICCommand { $[aic] ![\n]* }
+
+  @precedence { notSlash LineComment }
+
+}
